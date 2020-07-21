@@ -34,7 +34,7 @@ import time
 class remote(object):
     crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop'
     goog_path = '/opt/google/chrome-remote-desktop/'
-    apt_depends = ['google-chrome', 'xserver-xorg-video-dummy', 'xserver-xorg-input-void']
+    apt_depends = ['google-chrome', 'xbase-clients', 'xserver-xorg-video-dummy', 'xserver-xorg-input-void']
     override = True
     verbose = True
 
@@ -65,11 +65,15 @@ class remote(object):
         subprocess.Popen(str(
             'wget -O ' + deb + ' http://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb'),
                          shell=True).wait()
+
         remote._vprint(text='checking ' + deb + ' w/ dpkg...')
-        cmd = str('sudo dpkg -i ' + deb)
-        time.sleep(.1)
-        subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).wait()
-        time.sleep(.1)
+
+        cmds = [str('sudo dpkg -i ' + deb), 'sudo apt-get install -f']
+
+        for cmd in cmds:
+            remote._vprint(text='executing ``` ' + cmd + ' ```')
+            subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).wait()
+            time.sleep(.1)
         remote._vprint(text='done with dpkg... ')
         time.sleep(.1)
 
