@@ -58,8 +58,7 @@ class remote(object):
         deb = '.crd.deb'
 
         for depend in remote.apt_depends:
-            if not cls._is_installed(cmd=depend):
-                subprocess.Popen('sudo apt-get install ' + depend + ' -y', shell=True).wait()
+            subprocess.Popen('sudo apt-get install ' + depend + ' -y', shell=True).wait()
 
         remote._vprint(text='fetching deb package...')
         subprocess.Popen(str(
