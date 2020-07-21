@@ -1,12 +1,136 @@
 #!/usr/bin/python3
 """
 Forceful server controls for chrome remote desktop.
-Written by Jess Sullivan
 @ https://github.com/Jesssullivan/chrome-remote-desktop-budgie
 @ https://transscendsurvival.org/
 """
 
-from remote import *
+import sys
+from shutil import which
+import argparse
+import atexit
+import errno
+import fcntl
+import getpass
+import grp
+import hashlib
+import json
+import logging
+import os
+import pipes
+import platform
+import psutil
+import pwd
+import re
+import signal
+import socket
+import subprocess
+import syslog
+import tempfile
+import threading
+import time
+
+
+class remote(object):
+    crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop'
+    goog_path = '/opt/google/chrome-remote-desktop/'
+    apt_depends = ['google-chrome', 'xserver-xorg-video-dummy', 'xserver-xorg-input-void']
+    override = True
+    verbose = True
+
+    @staticmethod
+    def _vprint(text):
+        if remote.verbose:
+            print(str(text))
+
+    @classmethod
+    def _is_installed(cls, cmd):
+        cls._vprint(text='checking if ' + cmd + ' is present...')
+        if not which(cmd):
+            cls._vprint(text="didn't find " + cmd + '...')
+            return False
+        else:
+            return True
+
+    @classmethod
+    def _serve_install(cls):
+
+        deb = '.crd.deb'
+
+        for depend in remote.apt_depends:
+            if not cls._is_installed(cmd=depend):
+                subprocess.Popen('sudo apt-get install ' + depend + ' -y', shell=True).wait()
+
+        remote._vprint(text='fetching deb package...')
+        subprocess.Popen(str(
+            'wget -O ' + deb + ' http://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb'),
+                         shell=True).wait()
+        remote._vprint(text='checking ' + deb + ' w/ dpkg...')
+        cmd = str('sudo dpkg -i ' + deb)
+        time.sleep(.1)
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).wait()
+        time.sleep(.1)
+        remote._vprint(text='done with dpkg... ')
+        time.sleep(.1)
+
+    @classmethod
+    def get_display(cls):
+        if remote.override:
+            try:
+                proc = subprocess.Popen('echo $DISPLAY', stdout=subprocess.PIPE, shell=True)
+                result = proc.stdout.read().__str__()
+                display_num = result.split(':')[1].split('\\')[0]
+                remote._vprint(text='init display value read @ ' + display_num)
+                return display_num
+            except:
+                pass
+        remote._vprint(text='init display value set @ 0')
+        return int(0)
+
+    @staticmethod
+    def remote_sizes():
+        if remote.override:
+            return ("1600x1200,1600x900,1440x900,1366x768,1360x768,1280x1024,"
+                    "1280x800,1280x768,1280x720,1152x864,1024x768,1024x600,"
+                    "800x600,1680x1050,1920x1080,1920x1200,2560x1440,"
+                    "2560x1600,3840x2160,3840x2560")
+        else:
+            return "1920x1080"
+
+    @staticmethod
+    def status_crd():
+        cmd = str(remote.crd_path + ' --get-status')
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+            proc.wait()
+            if 'denied' in proc.stdout.read().__str__():
+                raise ChildProcessError
+        except ChildProcessError:
+            print('A command was denied, please reboot')
+        except:
+            pass
+
+    @staticmethod
+    def start_crd():
+        cmd = str(remote.crd_path + ' --start')
+        try:
+            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+            proc.wait()
+            if 'denied' in proc.stdout.read().__str__():
+                raise ChildProcessError
+        except ChildProcessError:
+            print('A command was denied, please reboot')
+        except:
+            pass
+
+    @classmethod
+    def update_opt_google(cls):
+        remote._vprint(text='syncing scripts....')
+        cmd = str('sudo cp -R ' + __file__ + ' ' + remote.crd_path)
+        remote._vprint(text='executing ``` ' + cmd + ' ```')
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).wait()
+        time.sleep(.5)
+
 
 class Authentication:
     """Manage authentication tokens for Chromoting/xmpp"""
@@ -332,9 +456,9 @@ def parse_config_arg(args):
 
     try:
         result = parser.parse_known_args(args)
-        return (result[0].config, result[1])
+        return result[0].config, result[1]
     except ArgumentParserError:
-        return (None, list(args))
+        return None, list(args)
 
 
 def get_daemon_proc(config_file, require_child_process=False):
@@ -603,9 +727,9 @@ def waitpid_with_timeout(pid, deadline):
     while time.time() < deadline:
         pid, status = os.waitpid(pid, os.WNOHANG)
         if pid != 0:
-            return (pid, status)
+            return pid, status
         time.sleep(1)
-    return (0, 0)
+    return 0, 0
 
 
 def waitpid_handle_exceptions(pid, deadline):
@@ -1569,7 +1693,7 @@ class ParentProcessLogger(object):
     __instance = None
 
     def __init__(self, write_fd):
-        """Constructor.
+        """Constructor
 
     Constructs the singleton instance of ParentProcessLogger. This should be
     called at most once.
@@ -1715,7 +1839,7 @@ class SessionOutputFilterThread(threading.Thread):
         is_logging = True
         while True:
             try:
-                line = self.stream.readline();
+                line = self.stream.readline()
             except IOError as e:
                 print("IOError when reading session output: ", e)
                 return
@@ -1760,4 +1884,19 @@ class SignalHandler:
 
 
 if __name__ == "__main__":
-    main()
+    if not os.path.abspath(__file__).startswith('/opt'):
+        remote._serve_install()
+        remote.update_opt_google()
+        time.sleep(1)
+        remote._vprint('remote: launching chrome-remote-desktop...\n')
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(asctime)s:%(levelname)s:%(message)s")
+        main()
+        remote._vprint('checking crd status & display value....\n')
+        remote.status_crd()
+        remote._vprint('enabling crd....\n')
+        remote.start_crd()
+
+    logging.basicConfig(level=logging.DEBUG,
+                        format="%(asctime)s:%(levelname)s:%(message)s")
+    sys.exit(main())
