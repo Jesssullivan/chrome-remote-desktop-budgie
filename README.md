@@ -4,7 +4,7 @@
 *Robustify chrome remote desktop for Ubuntu & GNOME based desktop environments.*
 
 ```
-wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/master/chrome-remote-desktop && python3 chrome-remote-desktop
+wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/master/chrome-remote-desktop && sudo python3 chrome-remote-desktop
 ```
 
 
