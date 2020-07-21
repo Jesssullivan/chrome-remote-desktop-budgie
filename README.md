@@ -1,4 +1,4 @@
-## *Some seriously forceful patches for Chrome Remote Desktop xD*
+## *Seriously forceful patches for Chrome Remote Desktop xD*
 
 
 *Robustify chrome remote desktop for Ubuntu & GNOME based desktop environments.*
