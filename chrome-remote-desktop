@@ -63,7 +63,7 @@ class remote(object):
 
     deb = tmp_path + '.crd.deb'
     # note, 'xbase-clients' must already be installed
-    apt_depends = ['xserver-xorg-video-dummy', 'xserver-xorg-input-void']
+    apt_depends = ['xvfb', 'xserver-xorg-video-dummy', 'xserver-xorg-input-void']
 
     @staticmethod
     def _vprint(text):
