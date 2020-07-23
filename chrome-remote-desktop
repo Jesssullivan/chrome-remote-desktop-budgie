@@ -43,8 +43,7 @@ class remote(object):
     crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop'
     verbatim_crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop.verbatim'
     this_path = os.path.abspath('chrome-remote-desktop')
-   # print(this_path)
-    #quit()
+
     # a persistent version of this script lives here,
     # so if you want systemctl can check for updates-
     # both google overwriting previous changes in /opt
