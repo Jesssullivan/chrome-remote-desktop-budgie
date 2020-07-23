@@ -107,14 +107,15 @@ class remote(object):
 
             cmds = [
                 'sudo dpkg -i ' + remote.deb,
-                'sudo apt-get install -f'
+                'sudo apt-get install -f',
+                'sudo usermod -a -G chrome-remote-desktop $USER'
             ]
 
             for cmd in cmds:
                 remote._execute(cmd)
                 time.sleep(.1)
 
-            remote._vprint(text='done with dpkg...')
+            remote._vprint(text='done with dpkg, you may need to reboot for usermod changes to take effect')
 
             # makes a backup of the chrome-remote-desktop script as distributed,
             # prior to making any further changes:
