@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+
 """
 Forceful server controls for chrome remote desktop.
 @ https://github.com/Jesssullivan/chrome-remote-desktop-budgie
@@ -6,14 +7,12 @@ Forceful server controls for chrome remote desktop.
 """
 
 import sys
-from shutil import which
+import shutil
 import argparse
 import atexit
 import errno
 import fcntl
-import getpass
 import grp
-import hashlib
 import json
 import logging
 import os
@@ -29,110 +28,191 @@ import syslog
 import tempfile
 import threading
 import time
+import hashlib
+import getpass
 
 
 class remote(object):
-    crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop'
-    goog_path = '/opt/google/chrome-remote-desktop/'
-    apt_depends = ['google-chrome', 'xbase-clients', 'xserver-xorg-video-dummy', 'xserver-xorg-input-void']
-    override = True
+
+    # if verbose=False, remote class will not print to console,
+    # leaving only the existing google chrome remote logs
     verbose = True
+
+    # this is where chrome puts the chrome-remote-desktop scripts:
+    goog_path = '/opt/google/chrome-remote-desktop/'
+    crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop'
+    verbatim_crd_path = '/opt/google/chrome-remote-desktop/chrome-remote-desktop.verbatim'
+    this_path = os.path.abspath('chrome-remote-desktop')
+   # print(this_path)
+    #quit()
+    # a persistent version of this script lives here,
+    # so if you want systemctl can check for updates-
+    # both google overwriting previous changes in /opt
+    # or remote updates available on github-
+    # by comparing the checksums of the copies from
+    # gitub <--> /opt/ <--> /usr/local/bin
+    bin_path = '/usr/local/bin/'
+    binscript = bin_path + __name__
+    release = bin_path + __file__ + '.github'
+
+    # we fetch the latest crd binary here, should it need to be (re)installed
+    # we also copy the current distributed version for easy override
+    tmp_path = '/tmp/crd/'
+    if not os.path.exists(tmp_path):
+        subprocess.Popen('mkdir ' + tmp_path, shell=True).wait()
+
+    deb = tmp_path + '.crd.deb'
+    # note, 'xbase-clients' must already be installed
+    apt_depends = ['xserver-xorg-video-dummy', 'xserver-xorg-input-void']
 
     @staticmethod
     def _vprint(text):
         if remote.verbose:
             print(str(text))
 
+    @staticmethod
+    def _execute(cmd):
+        remote._vprint(text='executing ``` ' + cmd + ' ```')
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        stdout = proc.stdout.read()
+        proc.wait()
+        return stdout
+
     @classmethod
     def _is_installed(cls, cmd):
         cls._vprint(text='checking if ' + cmd + ' is present...')
-        if not which(cmd):
+        if not shutil.which(cmd):
             cls._vprint(text="didn't find " + cmd + '...')
             return False
         else:
             return True
 
     @classmethod
-    def _serve_install(cls):
+    def serve_install(cls, apt=True, do_install=True):
 
-        deb = '.crd.deb'
+        # serve_install both checks apt depends as well as
+        # reinstall the chrome-remote-desktop software w/ dpkg.
 
-        for depend in remote.apt_depends:
-            subprocess.Popen('sudo apt-get install ' + depend + ' -y', shell=True).wait()
+        if apt:
+            for depend in remote.apt_depends:
+                if not remote._is_installed(cmd=depend):
+                    subprocess.Popen('sudo apt-get install ' + depend + ' -y', shell=True).wait()
 
-        remote._vprint(text='fetching deb package...')
+        if not os.path.exists(remote.crd_path) or do_install:
+            remote._vprint(text='fetching deb package...')
+            wget = str('wget -O ' + remote.deb +
+                       ' http://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb')
+            remote._execute(wget)
+            remote._vprint(text='checking ' + remote.deb + ' w/ dpkg...')
+
+            cmds = [
+                'sudo dpkg -i ' + remote.deb,
+                'sudo apt-get install -f'
+            ]
+
+            for cmd in cmds:
+                remote._execute(cmd)
+                time.sleep(.1)
+
+            remote._vprint(text='done with dpkg...')
+
+            # makes a backup of the chrome-remote-desktop script as distributed,
+            # prior to making any further changes:
+            copy_cmd = str('sudo cp -R ' + __file__ + ' ' + remote.verbatim_crd_path)
+            remote._execute(copy_cmd)
+
+    @classmethod
+    def sync_scripts(cls):
+
+        # sync_scripts lets us make sure the script version chrome is using to manage
+        # chrome-remote-desktop threads is the one we want, e.g. this one :)
+        # this way when google pushes automatic updates the rest of the software-
+        # overriding this one- the persistent version called by systemctl version
+        # in /bin/ will notice and add itself back to /opt/.
+
+        script_versions = [remote.this_path, remote.crd_path, remote.binscript, remote.release]
+        remote._vprint(text='checking scripts....')
+
+        for script in script_versions:
+            if script != remote.this_path:
+                cmd = str('sudo cp -R ' + remote.this_path + ' ' + script)
+                remote._execute(cmd)
+        # we all check the current github release here only to notify the user if there is
+        # a new script version.  the new script is not automatically used, but is available in /bin/
+        # (__file__.new) alongside the existing script.
+        remote._vprint(text='fetching latest script release...')
         subprocess.Popen(str(
-            'wget -O ' + deb + ' http://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb'),
-                         shell=True).wait()
+            'sudo wget -O ' + remote.release + ' ' +
+            'https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/master/chrome-remote-desktop'),
+            shell=True).wait()
 
-        remote._vprint(text='checking ' + deb + ' w/ dpkg...')
-
-        cmds = [str('sudo dpkg -i ' + deb), 'sudo apt-get install -f']
-
-        for cmd in cmds:
-            remote._vprint(text='executing ``` ' + cmd + ' ```')
-            subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).wait()
-            time.sleep(.1)
-        remote._vprint(text='done with dpkg... ')
+        remote._vprint(text='comparing script checksums...')
         time.sleep(.1)
+        hashes = {}
+
+        for script in script_versions:
+            hashmd = hashlib.md5()
+            hash_crd = open(script, "rb")
+            content = hash_crd.read()
+            hashmd.update(content)
+            hashes[script] = hashmd.hexdigest()
+
+        remote._vprint(text='syncing scripts....')
+        time.sleep(.1)
+
+        remote._vprint(text=' __file__ hash: ' + hashes[remote.this_path] +
+                            '\n github release hash: ' + hashes[remote.release] +
+                            '\n local /bin/ script hash: ' + hashes[remote.binscript] +
+                            '\n /opt/ script hash: ' + hashes[remote.crd_path])
+
+        # remote.this_path will usually by the same as remote.binscript-
+        # systemctl should only be calling remote.binscript.
+        if hashes[remote.this_path] != hashes[remote.binscript]:
+            # in this scenario, $USER is likely running __file__ to set everything up
+            cmd = str('sudo cp -R ' + __file__ + ' ' + remote.binscript)
+            remote._execute(cmd)
+
+        if hashes[remote.binscript] != hashes[remote.crd_path]:
+            # in this scenario, google may have updated chrome-remote-desktop, and reset changes
+            cmd = str('sudo cp -R ' + remote.binscript + ' ' + remote.crd_path)
+            remote._execute(cmd)
+
+        if hashes[remote.release] != hashes[remote.binscript]:
+            remote._vprint(text='Hey! your chrome-remote-desktop is out of sync with new changes on github,' +
+                                ' check the changes or consider contributing @ ' +
+                                'https://github.com/Jesssullivan/chrome-remote-desktop-budgie \n')
 
     @classmethod
     def get_display(cls):
-        if remote.override:
-            try:
-                proc = subprocess.Popen('echo $DISPLAY', stdout=subprocess.PIPE, shell=True)
-                result = proc.stdout.read().__str__()
-                display_num = result.split(':')[1].split('\\')[0]
-                remote._vprint(text='init display value read @ ' + display_num)
-                return display_num
-            except:
-                pass
-        remote._vprint(text='init display value set @ 0')
+        try:
+            proc = subprocess.Popen('echo $DISPLAY', stdout=subprocess.PIPE, shell=True)
+            result = proc.stdout.read().__str__()
+            display_num = result.split(':')[1].split('\\')[0]
+            remote._vprint(text='$DISPLAY value read @ ' + display_num)
+            return display_num
+        except:
+            pass
+        remote._vprint(text='$DISPLAY value set @ 0')
         return int(0)
 
     @staticmethod
-    def remote_sizes():
-        if remote.override:
-            return ("1600x1200,1600x900,1440x900,1366x768,1360x768,1280x1024,"
+    def passed_crd(*passed_arg):
+        cmd = str(remote.crd_path + str(*passed_arg))
+        try:
+            passed = remote._execute(cmd)
+            if 'denied' in passed.__str__():
+                raise ChildProcessError
+        except ChildProcessError:
+            print('A command was denied, please reboot')
+        except:
+            print('noting error, continuing....')
+            time.sleep(.5)
+            pass
+
+    remote_sizes = ("1600x1200,1600x900,1440x900,1366x768,1360x768,1280x1024,"
                     "1280x800,1280x768,1280x720,1152x864,1024x768,1024x600,"
                     "800x600,1680x1050,1920x1080,1920x1200,2560x1440,"
                     "2560x1600,3840x2160,3840x2560")
-        else:
-            return "1920x1080"
-
-    @staticmethod
-    def status_crd():
-        cmd = str(remote.crd_path + ' --get-status')
-        try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-            proc.wait()
-            if 'denied' in proc.stdout.read().__str__():
-                raise ChildProcessError
-        except ChildProcessError:
-            print('A command was denied, please reboot')
-        except:
-            pass
-
-    @staticmethod
-    def start_crd():
-        cmd = str(remote.crd_path + ' --start')
-        try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-            proc.wait()
-            if 'denied' in proc.stdout.read().__str__():
-                raise ChildProcessError
-        except ChildProcessError:
-            print('A command was denied, please reboot')
-        except:
-            pass
-
-    @classmethod
-    def update_opt_google(cls):
-        remote._vprint(text='syncing scripts....')
-        cmd = str('sudo cp -R ' + __file__ + ' ' + remote.crd_path)
-        remote._vprint(text='executing ``` ' + cmd + ' ```')
-        subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True).wait()
-        time.sleep(.5)
 
 
 class Authentication:
@@ -236,8 +316,8 @@ XORG_DUMMY_VIDEO_RAM = 1048576  # KiB
 # with large or multiple monitors. This is a comma-separated list of
 # resolutions that will be made available if the X server supports RANDR. These
 # defaults can be overridden in ~/.profile.
-DEFAULT_SIZES = remote.remote_sizes()
-DEFAULT_SIZES_XORG = remote.remote_sizes()
+DEFAULT_SIZES = remote.remote_sizes
+DEFAULT_SIZES_XORG = remote.remote_sizes
 
 SCRIPT_PATH = os.path.abspath(sys.argv[0])
 SCRIPT_DIR = os.path.dirname(SCRIPT_PATH)
@@ -1888,17 +1968,24 @@ class SignalHandler:
 
 if __name__ == "__main__":
     if not os.path.abspath(__file__).startswith('/opt'):
-        remote._serve_install()
-        remote.update_opt_google()
-        time.sleep(1)
-        remote._vprint('remote: launching chrome-remote-desktop...\n')
+
+        if not os.path.exists(remote.crd_path):
+            remote.serve_install()
+            time.sleep(.1)
+
+        remote.sync_scripts()
+        time.sleep(.1)
+
+        print('remote: initialing chrome-remote-desktop... \n')
         logging.basicConfig(level=logging.DEBUG,
                             format="%(asctime)s:%(levelname)s:%(message)s")
         main()
-        remote._vprint('checking crd status & display value....\n')
-        remote.status_crd()
-        remote._vprint('enabling crd....\n')
-        remote.start_crd()
+
+        print('checking crd status & display value....\n')
+        remote.passed_crd(' --get-status')
+
+        print('enabling crd daemon....\n')
+        remote.passed_crd(' --start')
 
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s:%(levelname)s:%(message)s")

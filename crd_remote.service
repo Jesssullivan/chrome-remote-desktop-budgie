@@ -1,0 +1,13 @@
+[Unit]
+Description=Check integrity of chrome-remote-desktop
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/usr/bin/python3 /usr/local/bin/chrome-remote-desktop
+
+[Install]
+WantedBy=multi-user.target

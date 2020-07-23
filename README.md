@@ -14,5 +14,6 @@ wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie
 python3 chrome-remote-desktop
 ```
 
+python -m py_compile script.py
 
 *TODO: actually write the readme, lol*
