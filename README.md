@@ -1,8 +1,8 @@
 
-#### Fully automated patching for Chrome Remote Desktop on Ubuntu Budgie & GNOME-based desktop environments.
+#### Fully automated patching for Chrome Remote Desktop on Ubuntu Budgie.
 
 
-Chrome remote desktop is fantastic, but often clashes with Xorg nuances from a variety of desktop environments using the GNOME stack.  This `chrome-remote-desktop` script extends and replaces the version automatically installed by Google in `/opt/google/chrome-remote-desktop/chrome-remote-desktop`. This stuff is only relevant for accessing your Ubuntu machine from elsewhere *(e.g. the "server", the client machine should not be installing anything, all it needs is a web browser)*.
+Chrome remote desktop is fantastic, but often clashes with Xorg nuances from a variety of desktop environments in Ubuntu.  This `chrome-remote-desktop` script extends and replaces the version automatically installed by Google in `/opt/google/chrome-remote-desktop/chrome-remote-desktop`. This stuff is only relevant for accessing your Ubuntu machine from elsewhere *(e.g. the "server", the client machine should not be installing anything, all it needs is a web browser)*.
 
 
 
