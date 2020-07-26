@@ -19,17 +19,16 @@ The trouble comes when you are trying to remote in- some problems you may encoun
 
 ```
 # get this script:
-wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/devel/chrome-remote-desktop
+wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/master/chrome-remote-desktop
 
 # or:
 git clone https://github.com/Jesssullivan/chrome-remote-desktop-budgie/ 
 cd chrome-remote-desktop-budgie 
-git checkout devel
 
 # behold:
 python3 chrome-remote-desktop
 
-# ...perhaps:
+# ...perhaps, if you are keen (optional):
 # sudo chmod u+x addsystemd.sh
 # sudo ./addsystemd.sh
 ```
@@ -42,3 +41,4 @@ We are primarily just enforcing the use of existing instances of X and correct d
 - A mirror of this script is also maintained at `/usr/local/bin/chrome-remote-desktop.github`, and will let the user know if there are updates.   
 - The version distributed by google is retained in `/opt/` too as `chrome-remote-desktop.verbatim`.   
 - Each of these versions are compared by md5 hash- this way our patched version of `chrome-remote-desktop` will always make sure it is where it should be, even after Google pushes updates and overwrites everything in `/opt/`.
+
