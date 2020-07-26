@@ -18,14 +18,20 @@ The trouble comes when you are trying to remote in- some problems you may encoun
 ***Patch it up:***
 
 ```
-# install base depends:
-sudo apt-get install xbase-clients
-
 # get this script:
-wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/master/chrome-remote-desktop
+wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/devel/chrome-remote-desktop
+
+# or:
+git clone https://github.com/Jesssullivan/chrome-remote-desktop-budgie/ 
+cd chrome-remote-desktop-budgie 
+git checkout devel
 
 # behold:
 python3 chrome-remote-desktop
+
+# ...perhaps:
+# sudo chmod u+x addsystemd.sh
+# sudo ./addsystemd.sh
 ```
 
 ***What does this do?***

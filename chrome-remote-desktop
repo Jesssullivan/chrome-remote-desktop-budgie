@@ -50,9 +50,10 @@ class remote(object):
     # or remote updates available on github-
     # by comparing the checksums of the copies from
     # gitub <--> /opt/ <--> /usr/local/bin
+
     bin_path = '/usr/local/bin/'
-    binscript = bin_path + __name__
-    release = bin_path + __file__ + '.github'
+    binscript = bin_path + 'chrome-remote-desktop'
+    release = bin_path + 'chrome-remote-desktop.github'
 
     # we fetch the latest crd binary here, should it need to be (re)installed
     # we also copy the current distributed version for easy override
@@ -61,8 +62,12 @@ class remote(object):
         subprocess.Popen('mkdir ' + tmp_path, shell=True).wait()
 
     deb = tmp_path + '.crd.deb'
+
     # note, 'xbase-clients' must already be installed
-    apt_depends = ['xvfb', 'xserver-xorg-video-dummy', 'xserver-xorg-input-void']
+    apt_depends = ['xbase-clients',
+                   'xvfb',
+                   'xserver-xorg-video-dummy',
+                   'xserver-xorg-input-void']
 
     @staticmethod
     def _vprint(text):
@@ -137,9 +142,11 @@ class remote(object):
             if script != remote.this_path:
                 cmd = str('sudo cp -R ' + remote.this_path + ' ' + script)
                 remote._execute(cmd)
+
         # we all check the current github release here only to notify the user if there is
         # a new script version.  the new script is not automatically used, but is available in /bin/
         # (__file__.new) alongside the existing script.
+
         remote._vprint(text='fetching latest script release...')
         subprocess.Popen(str(
             'sudo wget -O ' + remote.release + ' ' +
@@ -167,6 +174,7 @@ class remote(object):
 
         # remote.this_path will usually by the same as remote.binscript-
         # systemctl should only be calling remote.binscript.
+
         if hashes[remote.this_path] != hashes[remote.binscript]:
             # in this scenario, $USER is likely running __file__ to set everything up
             cmd = str('sudo cp -R ' + __file__ + ' ' + remote.binscript)
@@ -1969,7 +1977,8 @@ class SignalHandler:
 if __name__ == "__main__":
     if not os.path.abspath(__file__).startswith('/opt'):
 
-        if not os.path.exists(remote.crd_path):
+        # do not keep reinstalling each time launched via systemctl:
+        if 'local/bin' not in os.path.abspath(__file__):
             remote.serve_install()
             time.sleep(.1)
 
@@ -1981,10 +1990,10 @@ if __name__ == "__main__":
                             format="%(asctime)s:%(levelname)s:%(message)s")
         main()
 
-        print('checking crd status & display value....\n')
+        print('remote: checking crd status & display value....\n')
         remote.passed_crd(' --get-status')
 
-        print('enabling crd daemon....\n')
+        print('remote: checking crd daemon....\n')
         remote.passed_crd(' --start')
 
     logging.basicConfig(level=logging.DEBUG,
