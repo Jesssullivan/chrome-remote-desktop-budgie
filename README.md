@@ -8,7 +8,7 @@ Chrome remote desktop is fantastic, but often clashes with Xorg nuances from a v
 
 #### ***Set up the server:***
 
-Before patching anything or pursuing other forms of delightful tomfoolery, follow the [installation instructions provided by Google]https://remotedesktop.google.com/headless).  Set up everything normally- install Google's .deb download with dpkg, set up a PIN, etc.
+Before patching anything or pursuing other forms of delightful tomfoolery, follow the [installation instructions provided by Google](https://remotedesktop.google.com/headless).  Set up everything normally- install Google's .deb download with dpkg, set up a PIN, etc.
 The trouble comes when you are trying to remote in- some problems you may encounter include:
 - none of the X sessions work, each immediately closing the connection to the client
 - the remote desktop environment crashes or becomes mangled
