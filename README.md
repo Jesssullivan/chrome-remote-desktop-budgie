@@ -35,7 +35,7 @@ sudo ./addsystemd.sh
 sudo --user=$USER /usr/bin/python3 /usr/local/bin/chrome-remote-desktop
 ```
 
-#### If the Google Chrome browser has been installed on the remote machine too, be aware our fiddling will cause the remote machine's [access](https://remotedesktop.google.com/access) page to erroneously report* `A problem was detected with the Chrome Remote Desktop installation on this computer.`  **this is can be ignored**.
+##### If the Google Chrome browser has been installed on the remote machine too, be aware our fiddling will cause the remote machine's [access](https://remotedesktop.google.com/access) page to erroneously report `A problem was detected with the Chrome Remote Desktop installation on this computer.`  **this is can be ignored**.
 
 
 <hr>
