@@ -32,8 +32,9 @@ sudo dpkg -i chrome-remote-desktop_current_amd64.deb
 # get this script:
 git clone https://github.com/Jesssullivan/chrome-remote-desktop-budgie/  && cd chrome-remote-desktop-budgie
 
-# launch:
+# launch, permiss:
 python3 chrome-remote-desktop
+sudo chmod +s /opt/google/chrome-remote-desktop/user-session
 
 # add the service file to start the daemon on boot:
 sudo chmod u+x addsystemd.sh && sudo ./addsystemd.sh
