@@ -94,7 +94,7 @@ class Remote(object):
             return True
 
     @classmethod
-    def serve_install(cls, apt=True, do_install=False):
+    def serve_install(cls, apt=True, do_install=True):
 
         # serve_install both checks apt depends as well as
         # reinstall the chrome-remote-desktop software w/ dpkg.
