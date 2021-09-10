@@ -36,8 +36,7 @@ git clone https://github.com/Jesssullivan/chrome-remote-desktop-budgie/  && cd c
 python3 chrome-remote-desktop
 
 # add the service file to start the daemon on boot:
-sudo chmod u+x addsystemd.sh
-sudo ./addsystemd.sh
+sudo chmod u+x addsystemd.sh && sudo ./addsystemd.sh
 
 # or, if you'd prefer to launch the daemon manually:
 sudo --user=$USER /usr/bin/python3 /usr/local/bin/chrome-remote-desktop
