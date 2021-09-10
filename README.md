@@ -16,7 +16,7 @@ The trouble comes when you are trying to remote in- some problems you may encoun
 
  
 
-#### How to [install Chrome Remote Desktop remotely:](https://remotedesktop.google.com/headless):
+#### How to [install Chrome Remote Desktop remotely](https://remotedesktop.google.com/headless):
 - **Visit https://remotedesktop.google.com/headless and follow the prompts, set the remote pin with the `DISPLAY` command provided by the headless authorization form, etc.**
 
 *Patch it up:*
