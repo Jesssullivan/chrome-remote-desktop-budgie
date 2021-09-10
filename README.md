@@ -16,21 +16,21 @@ The trouble comes when you are trying to remote in- some problems you may encoun
 
  
 
-#### How to [install Chrome Remote Desktop remotely](https://remotedesktop.google.com/headless):
+### How to [install Chrome Remote Desktop remotely](https://remotedesktop.google.com/headless):
 
 ```
 sudo apt-get install xvfb xbase-clients
 wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
 sudo dpkg -i chrome-remote-desktop_current_amd64.deb
-
 ```
 
-- **Visit https://remotedesktop.google.com/headless and follow the prompts, set the remote pin with the `DISPLAY` command provided by the headless authorization form, etc.**
+- **Visit https://remotedesktop.google.com/headless and follow the prompts, then set the remote pin with the `DISPLAY` command in the remote machine   provided by the headless authorization form, etc.**
 
+ 
 *Patch it up:*
 ```
 # get this script:
-wget https://raw.githubusercontent.com/Jesssullivan/chrome-remote-desktop-budgie/master/chrome-remote-desktop
+git clone https://github.com/Jesssullivan/chrome-remote-desktop-budgie/  && cd chrome-remote-desktop-budgie
 
 # launch:
 python3 chrome-remote-desktop
