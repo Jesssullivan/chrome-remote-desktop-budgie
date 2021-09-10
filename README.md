@@ -16,7 +16,7 @@ The trouble comes when you are trying to remote in- some problems you may encoun
 
  
 
-#### *How to [install Chrome Remote Desktop remotely](https://remotedesktop.google.com/headless):
+#### How to [install Chrome Remote Desktop remotely:](https://remotedesktop.google.com/headless):
 - **Visit https://remotedesktop.google.com/headless and follow the prompts, set the remote pin with the `DISPLAY` command provided by the headless authorization form, etc.**
 
 *Patch it up:*
@@ -35,8 +35,7 @@ sudo ./addsystemd.sh
 sudo --user=$USER /usr/bin/python3 /usr/local/bin/chrome-remote-desktop
 ```
 
-*If the Google Chrome browser has been installed on the remote machine too, be aware our fiddling will cause the remote machine's [access](https://remotedesktop.google.com/access) page to erroneously report* 
-`A problem was detected with the Chrome Remote Desktop installation on this computer.`- this is can be ignored.
+##### If the Google Chrome browser has been installed on the remote machine too, be aware our fiddling will cause the remote machine's [access](https://remotedesktop.google.com/access) page to erroneously report* `A problem was detected with the Chrome Remote Desktop installation on this computer.`  **this is can be ignored**.
 
 
 ***What does this do?***
